@@ -1,17 +1,31 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, View, StyleSheet, Pressable } from "react-native";
 import products from "@assets/data/products";
 import { defaultPizzaImage } from "@/components/ProductListItem";
+import Button from "@/components/Button";
+import { useCart } from "@/providers/CartProvider";
+import { PizzaSize } from "@/types";
 
-const sizes = ["S", "M", "L", "XL"];
+const sizes: PizzaSize[] = ["S", "M", "L", "XL"];
 
 const ProductDetailsScreen = () => {
   const { id } = useLocalSearchParams();
+  const { addItem } = useCart();
 
-  const [selectedSize, setSelectedSize] = useState("M");
+  const router = useRouter();
+
+  const [selectedSize, setSelectedSize] = useState<PizzaSize>("M");
 
   const product = products.find((p) => p.id.toString() === id);
+
+  const addToCart = () => {
+    if (!product) {
+      return;
+    }
+    addItem(product, selectedSize);
+    router.push('/cart');
+  };
 
   if (!product) {
     return <Text>Product not fount</Text>;
@@ -25,17 +39,20 @@ const ProductDetailsScreen = () => {
         style={styles.image}
       />
 
-      {/* <Text>Select size</Text> */}
+      <Text>Select size</Text>
       <View style={styles.sizes}>
         {sizes.map((size) => (
-          <View
+          <Pressable
+            onPress={() => {
+              setSelectedSize(size);
+            }}
             style={[
               styles.size,
               { backgroundColor: selectedSize == size ? "gainsboro" : "white" },
             ]}
             key={size}
           >
-            {/* <Text
+            <Text
               style={[
                 styles.sizeText,
                 {
@@ -44,12 +61,13 @@ const ProductDetailsScreen = () => {
               ]}
             >
               {size}
-            </Text> */}
-          </View>
+            </Text>
+          </Pressable>
         ))}
       </View>
 
       <Text style={styles.price}>ProductDetailsScreen for {id}</Text>
+      <Button onPress={addToCart} text="Add to cart"></Button>
     </View>
   );
 };
@@ -67,6 +85,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 18,
     fontWeight: "bold",
+    marginTop: "auto",
   },
   sizes: {
     flexDirection: "row",
